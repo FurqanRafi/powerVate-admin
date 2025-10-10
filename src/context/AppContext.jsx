@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import {
   collection,
-  doc,
+  doc,  
   getDoc,
   getDocs,
   query,
@@ -337,6 +337,9 @@ export const AppProvider = ({ children }) => {
       return { success: false, message: err.message };
     }
   };
+
+
+  
 
   useEffect(() => {
     if (!admin) {

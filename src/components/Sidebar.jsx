@@ -1,10 +1,11 @@
 export default function Sidebar({ activePage, setActivePage, onLogout }) {
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'users', label: 'Users', icon: '👥' },
-    { id: 'doctors', label: 'Doctors', icon: '⚕️' },
-    { id: 'discount', label: 'Discount', icon: '🏷️' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' }
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "users", label: "Users", icon: "👥" },
+    { id: "doctors", label: "Doctors", icon: "⚕️" },
+    { id: "discount", label: "Discount", icon: "🏷️" },
+    { id: "pricing", label: "Pricing Plans", icon: "💰" },
+    { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
   return (
@@ -21,8 +22,8 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
             onClick={() => setActivePage(item.id)}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition duration-200 ${
               activePage === item.id
-                ? 'bg-white text-blue-900 font-semibold'
-                : 'text-white hover:bg-blue-800'
+                ? "bg-white text-blue-900 font-semibold"
+                : "text-white hover:bg-blue-800"
             }`}
           >
             <span className="text-xl">{item.icon}</span>

@@ -55,8 +55,10 @@ export default function UserDetailsPage() {
         return <DoctorsPage />;
       case "discount":
         return <DiscountPage />;
+
       case "settings":
         return <SettingsPage adminData={adminData} />;
+
       default:
         return <DashboardPage />;
     }

@@ -1,30 +1,31 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import DashboardPage from '../components/pages/DashboardPage';
-import UsersPage from '../components/pages/UsersPage';
-import DoctorsPage from '../components/pages/DoctorsPage';
-import DiscountPage from '../components/pages/DiscountPage';
-import SettingsPage from '../components/pages/SettingsPage';
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
+import DashboardPage from "../components/pages/DashboardPage";
+import UsersPage from "../components/pages/UsersPage";
+import DoctorsPage from "../components/pages/DoctorsPage";
+import DiscountPage from "../components/pages/DiscountPage";
+import PricingPage from "../components/pages/PricingPage";
+import SettingsPage from "../components/pages/SettingsPage";
 
 export default function Dashboard() {
-  const [activePage, setActivePage] = useState('dashboard');
+  const [activePage, setActivePage] = useState("dashboard");
   const [adminData, setAdminData] = useState(null);
-  const {state} = useLocation();
+  const { state } = useLocation();
   const navigate = useNavigate();
-  
-  useEffect(() => {
-  if (state?.fromUserDetails && state?.activePage) {
-    setActivePage(state.activePage);
-  }
-}, [state]);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    const data = localStorage.getItem('adminData');
+    if (state?.fromUserDetails && state?.activePage) {
+      setActivePage(state.activePage);
+    }
+  }, [state]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    const data = localStorage.getItem("adminData");
 
     if (!token || !data) {
-      navigate('/');
+      navigate("/");
       return;
     }
 
@@ -32,22 +33,24 @@ export default function Dashboard() {
   }, [navigate, adminData]);
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminData');
-    navigate('/');
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminData");
+    navigate("/");
   };
 
   const renderPage = () => {
     switch (activePage) {
-      case 'dashboard':
+      case "dashboard":
         return <DashboardPage setActivePage={setActivePage} />;
-      case 'users':
+      case "users":
         return <UsersPage />;
-      case 'doctors':
+      case "doctors":
         return <DoctorsPage />;
-      case 'discount':
+      case "discount":
         return <DiscountPage />;
-      case 'settings':
+      case "pricing":
+        return <PricingPage />;
+      case "settings":
         return <SettingsPage adminData={adminData} />;
       default:
         return <DashboardPage />;
@@ -67,7 +70,9 @@ export default function Dashboard() {
       />
       <div className="flex-1 p-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Welcome back, {adminData.name}</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Welcome back, {adminData.name}
+          </h2>
           <p className="text-gray-600 mt-1">{adminData.profile.fullName}</p>
         </div>
         {renderPage()}
