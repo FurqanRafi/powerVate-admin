@@ -30,7 +30,7 @@ export default function Dashboard() {
     }
 
     setAdminData(JSON.parse(data));
-  }, [navigate, adminData]);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");

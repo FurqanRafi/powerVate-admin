@@ -1,4 +1,8 @@
+import { useLocation, useNavigate } from "react-router-dom";
+
 export default function Sidebar({ activePage, setActivePage, onLogout }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: "📊" },
     { id: "users", label: "Users", icon: "👥" },
@@ -19,7 +23,12 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActivePage(item.id)}
+            onClick={() =>{
+              if(location.pathname !== "/dashboard"){
+                navigate('/dashboard')
+              }
+               setActivePage(item.id)
+            }}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition duration-200 ${
               activePage === item.id
                 ? "bg-white text-blue-900 font-semibold"

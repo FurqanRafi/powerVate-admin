@@ -64,22 +64,11 @@ export default function UserDetailsPage() {
     }
   };
   useEffect(() => {
-    const currentPath = window.location.pathname;
-    const isUserDetailsPage = currentPath.startsWith("/user-details/");
-
-    if (isUserDetailsPage && activePage !== "users") {
-      navigate("/dashboard", {
-        state: {
-          activePage: activePage,
-          fromUserDetails: true, // 👈 add this flag
-        },
-      });
-    }
-  }, [activePage, navigate]);
-
-  //   useEffect(() => {
-  //     renderPage();
-  //   }, [activePage]);
+  const currentPath = window.location.pathname;
+  if (currentPath.startsWith("/user-details/")) {
+    setActivePage("users");
+  }
+}, []);
 
   if (!adminData) {
     return null;
@@ -134,7 +123,6 @@ export default function UserDetailsPage() {
       await loadUser();
     }
   };
-
   const handleDelete = async () => {
     const result = await deleteUser(id);
     if (result.success) {
