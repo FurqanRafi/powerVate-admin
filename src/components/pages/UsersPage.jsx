@@ -9,6 +9,7 @@ export default function UsersPage() {
   const {
     createUser,
     fetchUsersPage,
+    fetchUserByDate,
     users,
     usersLoading,
     usersPage,
@@ -21,6 +22,8 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   // 🔄 Refresh Users
   const refreshUsers = async () => {
@@ -29,6 +32,8 @@ export default function UsersPage() {
     setLoading(false);
     setIsSearchMode(false);
     setSearchQuery("");
+    setFromDate("");
+    setToDate("");
   };
 
   useEffect(() => {
@@ -56,6 +61,22 @@ export default function UsersPage() {
     setSearchQuery("");
     setIsSearchMode(false);
     await fetchUsersPage(1, true);
+  };
+
+  // 📅 Date Filter
+  const handleFilter = async () => {
+    if (!fromDate || !toDate) {
+      return alert("Please select both From and To dates");
+    }
+    setLoading(true);
+    const data = await fetchUserByDate(fromDate, toDate);
+    setLoading(false);
+    if (data.success) {
+      setIsSearchMode(true);
+      setSearchResults(data.users);
+    } else {
+      alert("No users found in this date range");
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -93,12 +114,12 @@ export default function UsersPage() {
         onSubmit={handleFormSubmit}
       />
 
-      {/* 🔹 Header + Search + Refresh */}
-      <div className="flex justify-between items-center mb-6">
+      {/* 🔹 Header + Search + Filter + Add Button */}
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Users Management</h1>
 
-        <div className="flex items-center gap-3">
-          {/* Search Bar (Products-style) */}
+        <div className="w-full flex flex-wrap items-center justify-between gap-3">
+          {/* 🔍 Search Bar (Products-style) */}
           <div className="flex items-center gap-2">
             <div className="relative">
               <input
@@ -134,21 +155,50 @@ export default function UsersPage() {
             </button>
           </div>
 
-          <button
-            onClick={() => setOpenForm(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-5 rounded-lg font-medium shadow-sm transition-all"
-          >
-            + Add User
-          </button>
+          {/* 📅 Date Filter */}
+          <div className="flex gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">From</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="px-3 py-1 border rounded-md text-sm"
+              />
+              <label className="text-sm text-gray-600">To</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="px-3 py-1 border rounded-md text-sm"
+              />
+              <button
+                onClick={handleFilter}
+                className="px-4 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-700"
+              >
+                Filter
+              </button>
+            </div>
+
+            {/* ➕ Add User Button */}
+            <button
+              onClick={() => setOpenForm(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-5 rounded-lg font-medium shadow-sm transition-all"
+            >
+              + Add User
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Search Results Count */}
+      {/* 🔎 Search Results Count */}
       {isSearchMode && (
         <div className="mb-4 text-gray-600 text-sm">
           🔍 Found <span className="font-semibold">{searchResults.length}</span>{" "}
           result{searchResults.length !== 1 && "s"} for{" "}
-          <span className="font-medium">"{searchQuery}"</span>
+          <span className="font-medium">
+            {searchQuery ? `"${searchQuery}"` : "selected date range"}
+          </span>
         </div>
       )}
 
