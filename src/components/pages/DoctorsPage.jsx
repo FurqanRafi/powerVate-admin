@@ -57,7 +57,7 @@ export default function DoctorsPage() {
       />
 
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800">Doctors Management</h3>
+        <h3 className="text-2xl font-bold text-gray-800">Doctors Management</h3>
         <button
           onClick={() => {
             setOpenForm(true);
