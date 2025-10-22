@@ -1,50 +1,45 @@
-import React, { useEffect, useState } from "react";
+"use client";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "../../context/AppContext";
-import { Result } from "postcss";
+import AppContext from "../../context/AppContext";
 import PopupUser from "./PopupUser";
 
 export default function UsersPage() {
   const navigate = useNavigate();
   const {
+    createUser,
+    fetchUsersPage,
     users,
     usersLoading,
     usersPage,
     usersHasMore,
     goToUsersPage,
-    fetchUsersPage,
-
     fetchUserByName,
     fetchUserByDate,
-  } = useAppContext();
+  } = useContext(AppContext);
 
-  const [OpenForm, setOpenForm] = useState(false);
-
+  const [openForm, setOpenForm] = useState(false);
+  const [loading, setLoading] = useState(false); // 🔄 for manual refresh
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // const handleSearch = async () => {
-  //   if (!searchQuery.trim()) {
-  //     setIsSearchMode(false);
-  //     return;
-  //   }
+  // 🔄 Fetch All Users
+  const refreshUsers = async () => {
+    setLoading(true);
+    await fetchUsersPage(1, true);
+    setLoading(false);
+  };
 
-  //   // ✅ Fetch backend users directly
-  //   const results = await fetchUserByName(searchQuery.toLowerCase());
+  useEffect(() => {
+    if (users.length === 0) {
+      refreshUsers();
+    }
+  }, []);
 
-  //   if (Array.isArray(results) && results.length > 0) {
-  //     setSearchResults(results);
-  //     setIsSearchMode(true);
-  //   } else {
-  //     setSearchResults([]);
-  //     setIsSearchMode(false);
-  //     alert("No users found");
-  //   }
-  // };
-
+  // 🔍 Search Function
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setIsSearchMode(false);
@@ -52,7 +47,6 @@ export default function UsersPage() {
     }
 
     const allUsers = users;
-
     const results = allUsers.filter((user) =>
       user.profile?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -67,12 +61,6 @@ export default function UsersPage() {
       setSearchQuery("");
     }
   };
-
-  useEffect(() => {
-    if (users.length === 0) {
-      fetchUsersPage(1);
-    }
-  }, []);
 
   const handlePageChange = (newPage) => {
     if (newPage < 1) return;
@@ -91,9 +79,9 @@ export default function UsersPage() {
       day: "numeric",
     });
   };
-  console.log(users);
 
-  const HandleFilter = async () => {
+  // 📅 Filter by Date
+  const handleFilter = async () => {
     if (!fromDate || !toDate) {
       return alert("Please select both From and To dates");
     }
@@ -106,80 +94,66 @@ export default function UsersPage() {
     }
   };
 
+  // ✅ Handle Form Submission
+  const handleFormSubmit = async (data) => {
+    setLoading(true);
+    await createUser(data);
+    setOpenForm(false);
+    await refreshUsers();
+  };
+
   return (
-    <div>
+    <div className="p-6">
+      {/* 🔹 Popup User Form */}
       <PopupUser
-        isOpen={OpenForm}
+        isOpen={openForm}
         onClose={() => setOpenForm(false)}
-        onSubmit={async (data) => {
-          await createUser(data);
-          await fetchUsersPage(1, true); // ✅ refresh after creating
-          setOpenForm(false);
-        }}
+        onSubmit={handleFormSubmit}
       />
 
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex flex-col gap-5">
-          <h3 className="text-xl font-bold text-gray-800">Users Management</h3>
-        </div>
-
-        <div className="flex items-center gap-5">
-          <div className="text-sm text-gray-600">
-            Page {usersPage} • {users.length} users
-          </div>
-        </div>
-      </div>
-      <div className="SearchBar flex items-center justify-between gap-2 w-full mb-6">
+      {/* 🔍 Search + Filter Section */}
+      <div className="flex flex-wrap justify-between gap-4 mb-6">
         <div className="flex gap-2">
           <input
             type="text"
             placeholder="Search users..."
-            className="px-5 py-2 border border-gray-300  rounded-full"
+            className="px-4 py-2 border rounded-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <div className="flex-shrink-0">
-            <button
-              onClick={handleSearch}
-              className="px-5 py-2 bg-blue-900 text-white rounded-full hover:bg-blue-800"
-            >
-              Search
-            </button>
-          </div>
+          <button
+            onClick={handleSearch}
+            className="px-5 py-2 bg-blue-900 text-white rounded-full hover:bg-blue-800"
+          >
+            Search
+          </button>
         </div>
 
-        <div className="flex gap-2">
-          <div className="flex items-center gap-2">
-            <label htmlFor="#" className="text-sm text-gray-600">
-              From
-            </label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="px-5 py-1 border border-gray-300 w-full rounded-full"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="#" className="text-sm text-gray-600">
-              To
-            </label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="px-5 py-1 border border-gray-300 w-full rounded-full"
-            />
-          </div>
+        <div className="flex gap-2 items-center">
+          <label className="text-sm text-gray-600">From</label>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="px-3 py-1 border rounded-full"
+          />
+          <label className="text-sm text-gray-600">To</label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="px-3 py-1 border rounded-full"
+          />
           <button
-            onClick={HandleFilter}
+            onClick={handleFilter}
             className="px-5 py-2 bg-blue-800 text-white rounded-full hover:bg-blue-700"
           >
             Filter
           </button>
         </div>
       </div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold text-gray-800">Users Management</h3>
         <button
           onClick={() => setOpenForm(true)}
           className="px-5 py-2 bg-blue-900 text-white rounded-full hover:bg-blue-800"
@@ -187,38 +161,10 @@ export default function UsersPage() {
           Add New User
         </button>
       </div>
-      <div className="flex items-center gap-5 mb-4">
-        {isSearchMode && (
-          <>
-            <div className="text-sm text-gray-600">
-              Search for: <span className="font-semibold">"{searchQuery}"</span>
-              <span className="ml-3 text-blue-600">
-                ({searchResults.length} users found)
-              </span>{" "}
-              {/* ✅ Added this */}
-            </div>
-            <button
-              onClick={async () => {
-                setIsSearchMode(false);
-                setSearchQuery("");
-                setFromDate("");
-                setToDate("");
-                setSearchResults([]);
-                await fetchUsersPage(1, true);
-              }}
-              type="button"
-              className="ml-5 text-red-600 items-center"
-            >
-              X
-            </button>
-          </>
-        )}
-      </div>
 
-      {usersLoading ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading users...</p>
+      {loading || usersLoading ? (
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="animate-spin h-12 w-12 border-b-2 border-blue-900 rounded-full"></div>
         </div>
       ) : users.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -248,8 +194,8 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {(!isSearchMode ? users : searchResults).map((user) => (
-                  <tr key={user.id} className="hover:bg-gray  -50">
+                {(isSearchMode ? searchResults : users).map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       {user.profile?.fullName || "N/A"}
                     </td>
@@ -289,15 +235,15 @@ export default function UsersPage() {
               <button
                 onClick={() => handlePageChange(usersPage - 1)}
                 disabled={usersPage === 1}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
               >
                 Previous
               </button>
               <span className="text-gray-700">Page {usersPage}</span>
               <button
                 onClick={() => handlePageChange(usersPage + 1)}
-                disabled={!usersHasMore || isSearchMode}
-                className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!usersHasMore}
+                className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50"
               >
                 Next
               </button>

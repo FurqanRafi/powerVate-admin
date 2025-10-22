@@ -13,7 +13,6 @@ const ProductsPage = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Centralized function to fetch all products
   const refreshProducts = async () => {
     setLoading(true);
     const res = await getAllProducts();
@@ -21,12 +20,9 @@ const ProductsPage = () => {
     setLoading(false);
   };
 
-  // ✅ Fetch products once on mount
   useEffect(() => {
     refreshProducts();
   }, []);
-
-  // ✅ Handle Add / Update
   const handleFormSubmit = async (data) => {
     if (editingProduct) {
       await updateProduct(editingProduct.id, data);
@@ -39,7 +35,6 @@ const ProductsPage = () => {
     refreshProducts();
   };
 
-  // ✅ Handle Delete
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       await deleteProduct(id);
@@ -49,7 +44,6 @@ const ProductsPage = () => {
 
   return (
     <div className="p-6">
-      {/* Popup Form */}
       <PopupProducts
         isOpen={openForm}
         onClose={() => {
@@ -60,7 +54,6 @@ const ProductsPage = () => {
         initialData={editingProduct}
       />
 
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">
           Products Management
@@ -73,7 +66,6 @@ const ProductsPage = () => {
         </button>
       </div>
 
-      {/* Product List Section */}
       <div>
         <h2 className="text-2xl font-semibold mb-4 text-gray-700">
           All Products
@@ -92,7 +84,6 @@ const ProductsPage = () => {
                 key={product.id}
                 className="border rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
               >
-                {/* Image Section */}
                 <div className="w-full h-48 flex items-center justify-center overflow-hidden">
                   {product.imageUrl ? (
                     <img
@@ -105,7 +96,6 @@ const ProductsPage = () => {
                   )}
                 </div>
 
-                {/* Content Section */}
                 <div className="p-4 text-center">
                   <h3 className="text-lg font-semibold text-gray-800 truncate mb-1">
                     {product.name || "Untitled Product"}
@@ -128,7 +118,6 @@ const ProductsPage = () => {
                     )}
                   </p>
 
-                  {/* Buttons */}
                   <div className="flex justify-center gap-2 mt-2">
                     <button
                       onClick={() => {
