@@ -25,7 +25,6 @@ export default function UsersPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // 🔄 Refresh Users
   const refreshUsers = async () => {
     setLoading(true);
     await fetchUsersPage(1, true);
@@ -42,7 +41,6 @@ export default function UsersPage() {
     }
   }, []);
 
-  // 🔍 Search Function
   const handleSearch = async () => {
     const q = searchQuery.trim();
     if (!q) {
@@ -63,7 +61,6 @@ export default function UsersPage() {
     await fetchUsersPage(1, true);
   };
 
-  // 📅 Date Filter
   const handleFilter = async () => {
     if (!fromDate || !toDate) {
       return alert("Please select both From and To dates");
@@ -107,19 +104,18 @@ export default function UsersPage() {
 
   return (
     <div className="p-6">
-      {/* 🔹 Popup User Form */}
       <PopupUser
         isOpen={openForm}
         onClose={() => setOpenForm(false)}
         onSubmit={handleFormSubmit}
       />
 
-      {/* 🔹 Header + Search + Filter + Add Button */}
+
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Users Management</h1>
 
         <div className="w-full flex flex-wrap items-center justify-between gap-3">
-          {/* 🔍 Search Bar (Products-style) */}
+
           <div className="flex items-center gap-2">
             <div className="relative">
               <input
@@ -155,7 +151,7 @@ export default function UsersPage() {
             </button>
           </div>
 
-          {/* 📅 Date Filter */}
+ 
           <div className="flex gap-3">
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600">From</label>
