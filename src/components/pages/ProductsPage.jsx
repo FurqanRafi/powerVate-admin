@@ -105,7 +105,14 @@ const ProductsPage = () => {
                 placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault(); // page reload hone se rokta hai
+                    handleSearch(); // 👈 Enter par ye function call hoga
+                  }
+                }}
                 className="px-3 py-2 border rounded-md pr-8"
+                // aik click kara pa Search ho jay Enter Karna par
               />
               {searchQuery && (
                 <button
@@ -225,7 +232,6 @@ const ProductsPage = () => {
               ))}
             </div>
 
-     
             {!isSearchMode && (
               <div className="mt-6 flex justify-between items-center">
                 <button

@@ -37,7 +37,7 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-      refreshUsers();
+    refreshUsers();
   }, []);
 
   const handleSearch = async () => {
@@ -111,12 +111,10 @@ export default function UsersPage() {
         onSubmit={handleFormSubmit}
       />
 
-
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Users Management</h1>
 
         <div className="w-full flex flex-wrap items-center justify-between gap-3">
-
           <div className="flex items-center gap-2">
             <div className="relative">
               <input
@@ -124,6 +122,11 @@ export default function UsersPage() {
                 placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch();
+                  }
+                }}
                 className="px-3 py-2 border rounded-md pr-8"
               />
               {searchQuery && (
@@ -152,7 +155,6 @@ export default function UsersPage() {
             </button>
           </div>
 
- 
           <div className="flex gap-3">
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600">From</label>
@@ -167,6 +169,11 @@ export default function UsersPage() {
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleFilter();
+                  }
+                }}
                 className="px-3 py-1 border rounded-md text-sm"
               />
               <button
