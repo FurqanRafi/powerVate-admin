@@ -380,28 +380,72 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // const fetchUserByName = async (name) => {
+  //   try {
+  //     setUsersLoading(true);
+  //     const usersRef = collection(db, "users");
+  //     const q = query(
+  //       usersRef,
+  //       orderBy("profile.fullName"),
+  //       startAt(name),
+  //       endAt(name + "\uf8ff")
+  //     );
+
+  //     const querySnapshot = await getDocs(q);
+
+  //     if (!querySnapshot.empty) {
+  //       return querySnapshot.docs.map((doc) => ({
+  //         id: doc.id,
+  //         ...doc.data(),
+  //       }));
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching users by name:", error);
+  //     toast.error("Failed to fetch users by name");
+  //   } finally {
+  //     setUsersLoading(false);
+  //   }
+  // };
+
   const fetchUserByName = async (name) => {
     try {
       setUsersLoading(true);
+
       const usersRef = collection(db, "users");
+      const searchValue = name.toLowerCase(); // 👈 convert input to lowercase
+
+      // 🔍 Search on fullName_lower (recommended)
       const q = query(
         usersRef,
-        orderBy("profile.fullName"),
-        startAt(name),
-        endAt(name + "\uf8ff")
+        orderBy("profile.fullName_lower"), // must exist in Firestore
+        startAt(searchValue),
+        endAt(searchValue + "\uf8ff")
       );
 
       const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        return querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      // ✅ Convert to list
+      const usersList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // 🧠 If no results (old data without lowercase field), do fallback case
+      if (usersList.length === 0) {
+        const allUsers = await getDocs(usersRef);
+        const filtered = allUsers.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((user) =>
+            user.profile?.fullName?.toLowerCase()?.includes(searchValue)
+          );
+        return filtered;
       }
+
+      return usersList;
     } catch (error) {
       console.error("Error fetching users by name:", error);
       toast.error("Failed to fetch users by name");
+      return [];
     } finally {
       setUsersLoading(false);
     }
@@ -411,22 +455,42 @@ export const AppProvider = ({ children }) => {
   //   try {
   //     setUsersLoading(true);
   //     const usersRef = collection(db, "users");
-  //     const q = query(
+
+  //     // ✅ Try lowercase version first (if field exists)
+  //     let q = query(
   //       usersRef,
-  //       orderBy("profile.fullName"),
+  //       orderBy("profile.fullName_lower"),
   //       startAt(name.toLowerCase()),
   //       endAt(name.toLowerCase() + "\uf8ff")
   //     );
 
-  //     const querySnapshot = await getDocs(q);
+  //     let querySnapshot = await getDocs(q);
 
-  //     return querySnapshot.docs.map((doc) => ({
+  //     // ✅ If no results found, fallback to case-sensitive fullName search
+  //     if (querySnapshot.empty) {
+  //       q = query(
+  //         usersRef,
+  //         orderBy("profile.fullName"),
+  //         startAt(name),
+  //         endAt(name + "\uf8ff")
+  //       );
+  //       querySnapshot = await getDocs(q);
+  //     }
+
+  //     const usersList = querySnapshot.docs.map((doc) => ({
   //       id: doc.id,
   //       ...doc.data(),
   //     }));
+
+  //     if (usersList.length === 0) {
+  //       toast.info("No users found with that name");
+  //     }
+
+  //     return usersList;
   //   } catch (error) {
   //     console.error("Error fetching users by name:", error);
   //     toast.error("Failed to fetch users by name");
+  //     return [];
   //   } finally {
   //     setUsersLoading(false);
   //   }
@@ -568,7 +632,6 @@ export const AppProvider = ({ children }) => {
       }));
 
       if (snapshot.docs.length > 0) {
-        // store last doc of this page to use as cursor for next page
         productPageCursorsRef.current[pageNumber] =
           snapshot.docs[snapshot.docs.length - 1];
       }
@@ -591,21 +654,48 @@ export const AppProvider = ({ children }) => {
     fetchProductsPage(pageNumber);
   };
 
-  // Search products by name prefix (server query)
+  // const searchProductsByName = async (namePrefix) => {
+  //   try {
+  //     setProductsLoading(true);
+  //     const productsRef = collection(db, "products");
+  //     const q = query(
+  //       productsRef,
+  //       orderBy("name_lower"),
+  //       startAt(namePrefix.toLowerCase()),
+  //       endAt(namePrefix.toLowerCase() + "\uf8ff")
+  //     );
+  //     const snap = await getDocs(q);
+  //     const results = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  //     setProducts(results); // optionally set products to show search results
+  //     setProductsHasMore(false);
+  //     return { success: true, products: results };
+  //   } catch (err) {
+  //     console.error("Error searching products:", err);
+  //     toast.error("Search failed");
+  //     return { success: false, message: err.message };
+  //   } finally {
+  //     setProductsLoading(false);
+  //   }
+  // };
+
   const searchProductsByName = async (namePrefix) => {
     try {
       setProductsLoading(true);
+
       const productsRef = collection(db, "products");
-      const q = query(
-        productsRef,
-        orderBy("name_lower"),
-        startAt(namePrefix.toLowerCase()),
-        endAt(namePrefix.toLowerCase() + "\uf8ff")
+      const snap = await getDocs(productsRef); // ✅ fetch full backend data
+      const allProducts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      const searchValue = namePrefix.toLowerCase();
+
+      // 🔍 Case-insensitive match
+      const results = allProducts.filter((p) =>
+        p.name?.toLowerCase().includes(searchValue)
       );
-      const snap = await getDocs(q);
-      const results = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setProducts(results); // optionally set products to show search results
+
+      setProducts(results);
       setProductsHasMore(false);
+
       return { success: true, products: results };
     } catch (err) {
       console.error("Error searching products:", err);
@@ -616,7 +706,6 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Update / delete product remain same but ensure they update local state if needed:
   const updateProduct = async (id, data) => {
     try {
       const docRef = doc(db, "products", id);
@@ -624,7 +713,6 @@ export const AppProvider = ({ children }) => {
       if (payload.name) payload.name_lower = payload.name.toLowerCase();
       await updateDoc(docRef, payload);
       toast.success("Product updated successfully!");
-      // refresh local list if currently loaded (best to re-fetch current page)
       await fetchProductsPage(productsPage, true);
       return { success: true };
     } catch (error) {
@@ -639,7 +727,6 @@ export const AppProvider = ({ children }) => {
       const docRef = doc(db, "products", id);
       await deleteDoc(docRef);
       toast.success("Product deleted successfully!");
-      // refresh current page
       await fetchProductsPage(productsPage, true);
       return { success: true };
     } catch (error) {
@@ -768,7 +855,7 @@ export const AppProvider = ({ children }) => {
         updateDoctor,
         deleteDoctor,
         getDoctorById,
-        setUsersPage
+        setUsersPage,
       }}
     >
       {children}

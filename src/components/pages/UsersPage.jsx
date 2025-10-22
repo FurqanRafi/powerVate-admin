@@ -14,6 +14,7 @@ export default function UsersPage() {
     usersLoading,
     usersPage,
     setUsersPage,
+    fetchUserByName,
     usersHasMore,
     goToUsersPage,
   } = useContext(AppContext);
@@ -40,6 +41,19 @@ export default function UsersPage() {
     refreshUsers();
   }, []);
 
+  // const handleSearch = async () => {
+  //   const q = searchQuery.trim();
+  //   if (!q) {
+  //     setIsSearchMode(false);
+  //     await fetchUsersPage(1, true);
+  //     return;
+  //   }
+  //   const results = users.filter((user) =>
+  //     user.profile?.fullName?.toLowerCase().includes(q.toLowerCase())
+  //   );
+  //   setSearchResults(results);
+  //   setIsSearchMode(true);
+  // };
   const handleSearch = async () => {
     const q = searchQuery.trim();
     if (!q) {
@@ -47,11 +61,17 @@ export default function UsersPage() {
       await fetchUsersPage(1, true);
       return;
     }
-    const results = users.filter((user) =>
-      user.profile?.fullName?.toLowerCase().includes(q.toLowerCase())
-    );
-    setSearchResults(results);
-    setIsSearchMode(true);
+
+    setLoading(true);
+    const results = await fetchUserByName(q); // ✅ pure Firestore se fetch karega
+    if (results && results.length > 0) {
+      setSearchResults(results);
+      setIsSearchMode(true);
+    } else {
+      setSearchResults([]);
+      setIsSearchMode(true);
+    }
+    setLoading(false);
   };
 
   const handleClearSearch = async () => {
@@ -124,11 +144,13 @@ export default function UsersPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    e.preventDefault();
                     handleSearch();
                   }
                 }}
                 className="px-3 py-2 border rounded-md pr-8"
               />
+
               {searchQuery && (
                 <button
                   onClick={handleClearSearch}
