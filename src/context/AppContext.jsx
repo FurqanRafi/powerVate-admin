@@ -478,7 +478,7 @@ export const AppProvider = ({ children }) => {
   }, [admin]);
 
   // inside AppProvider (AppContext) — near other product functions / near top-level state
-  const PRODUCTS_PAGE_SIZE = 6; // change page size if you want
+  const PRODUCTS_PAGE_SIZE = 8; // change page size if you want
 
   // products pagination state
   const [products, setProducts] = useState([]);
