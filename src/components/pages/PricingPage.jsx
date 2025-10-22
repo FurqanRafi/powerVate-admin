@@ -126,13 +126,15 @@ const PricingPreview = () => {
   }, []);
 
   return (
-    <div className="min-h-screen MyContainer flex flex-col items-start py-10">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900 uppercase text-center">
+    <div className="min-h-screen MyContainer flex flex-col items-center py-10">
+      <h1 className="text-3xl font-bold mb-8 text-gray-900 uppercase ">
         Pricing Preview
       </h1>
 
       {loading ? (
-        <p className="text-center text-gray-700">Loading...</p>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin h-12 w-12 border-b-2 border-blue-900 rounded-full"></div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full  max-w-5xl ">
           {plans.map((plan, i) => (

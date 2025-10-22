@@ -9,6 +9,7 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
     { id: "doctors", label: "Doctors", icon: "⚕️" },
     { id: "discount", label: "Discount", icon: "🏷️" },
     { id: "pricing", label: "Pricing Plans", icon: "💰" },
+    { id: "products", label: "Products", icon: "📦" },
     { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
@@ -23,11 +24,16 @@ export default function Sidebar({ activePage, setActivePage, onLogout }) {
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() =>{
-              if(location.pathname !== "/dashboard"){
-                navigate('/dashboard')
+            onClick={() => {
+              if (location.pathname !== "/dashboard") {
+                navigate("/dashboard", {
+                  state: {
+                    activePage: item.id,
+                  },
+                });
+              } else {
+                setActivePage(item.id);
               }
-               setActivePage(item.id)
             }}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition duration-200 ${
               activePage === item.id

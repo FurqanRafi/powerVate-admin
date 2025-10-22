@@ -7,6 +7,7 @@ import DoctorsPage from "../components/pages/DoctorsPage";
 import DiscountPage from "../components/pages/DiscountPage";
 import PricingPage from "../components/pages/PricingPage";
 import SettingsPage from "../components/pages/SettingsPage";
+import ProductsPage from "../components/pages/ProductsPage";
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -16,6 +17,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (state?.fromUserDetails && state?.activePage) {
+      setActivePage(state.activePage);
+    }
+    if (state?.activePage) {
       setActivePage(state.activePage);
     }
   }, [state]);
@@ -50,6 +54,8 @@ export default function Dashboard() {
         return <DiscountPage />;
       case "pricing":
         return <PricingPage />;
+      case "products":
+        return <ProductsPage />;
       case "settings":
         return <SettingsPage adminData={adminData} />;
       default:
