@@ -14,23 +14,21 @@ export default function UsersPage() {
     usersPage,
     usersHasMore,
     goToUsersPage,
-    fetchUserByName,
-    fetchUserByDate,
   } = useContext(AppContext);
 
   const [openForm, setOpenForm] = useState(false);
-  const [loading, setLoading] = useState(false); // 🔄 for manual refresh
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
 
-  // 🔄 Fetch All Users
+  // 🔄 Refresh Users
   const refreshUsers = async () => {
     setLoading(true);
     await fetchUsersPage(1, true);
     setLoading(false);
+    setIsSearchMode(false);
+    setSearchQuery("");
   };
 
   useEffect(() => {
@@ -41,25 +39,23 @@ export default function UsersPage() {
 
   // 🔍 Search Function
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
+    const q = searchQuery.trim();
+    if (!q) {
       setIsSearchMode(false);
+      await fetchUsersPage(1, true);
       return;
     }
-
-    const allUsers = users;
-    const results = allUsers.filter((user) =>
-      user.profile?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+    const results = users.filter((user) =>
+      user.profile?.fullName?.toLowerCase().includes(q.toLowerCase())
     );
+    setSearchResults(results);
+    setIsSearchMode(true);
+  };
 
-    if (results.length > 0) {
-      setSearchResults(results);
-      setIsSearchMode(true);
-    } else {
-      setSearchResults([]);
-      setIsSearchMode(false);
-      alert("No users found");
-      setSearchQuery("");
-    }
+  const handleClearSearch = async () => {
+    setSearchQuery("");
+    setIsSearchMode(false);
+    await fetchUsersPage(1, true);
   };
 
   const handlePageChange = (newPage) => {
@@ -80,20 +76,6 @@ export default function UsersPage() {
     });
   };
 
-  // 📅 Filter by Date
-  const handleFilter = async () => {
-    if (!fromDate || !toDate) {
-      return alert("Please select both From and To dates");
-    }
-
-    const data = await fetchUserByDate(fromDate, toDate);
-
-    if (data.success) {
-      setIsSearchMode(true);
-      setSearchResults(data.users);
-    }
-  };
-
   // ✅ Handle Form Submission
   const handleFormSubmit = async (data) => {
     setLoading(true);
@@ -111,57 +93,66 @@ export default function UsersPage() {
         onSubmit={handleFormSubmit}
       />
 
-      {/* 🔍 Search + Filter Section */}
-      <div className="flex flex-wrap justify-between gap-4 mb-6">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Search users..."
-            className="px-4 py-2 border rounded-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button
-            onClick={handleSearch}
-            className="px-5 py-2 bg-blue-900 text-white rounded-full hover:bg-blue-800"
-          >
-            Search
-          </button>
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <label className="text-sm text-gray-600">From</label>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="px-3 py-1 border rounded-full"
-          />
-          <label className="text-sm text-gray-600">To</label>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="px-3 py-1 border rounded-full"
-          />
-          <button
-            onClick={handleFilter}
-            className="px-5 py-2 bg-blue-800 text-white rounded-full hover:bg-blue-700"
-          >
-            Filter
-          </button>
-        </div>
-      </div>
+      {/* 🔹 Header + Search + Refresh */}
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800">Users Management</h3>
-        <button
-          onClick={() => setOpenForm(true)}
-          className="px-5 py-2 bg-blue-900 text-white rounded-full hover:bg-blue-800"
-        >
-          Add New User
-        </button>
+        <h1 className="text-3xl font-bold text-gray-800">Users Management</h1>
+
+        <div className="flex items-center gap-3">
+          {/* Search Bar (Products-style) */}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-3 py-2 border rounded-md pr-8"
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-blue-900 text-white rounded-md"
+            >
+              Search
+            </button>
+
+            <button
+              onClick={refreshUsers}
+              className="px-3 py-2 bg-gray-100 rounded-md"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <button
+            onClick={() => setOpenForm(true)}
+            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-5 rounded-lg font-medium shadow-sm transition-all"
+          >
+            + Add User
+          </button>
+        </div>
       </div>
 
+      {/* Search Results Count */}
+      {isSearchMode && (
+        <div className="mb-4 text-gray-600 text-sm">
+          🔍 Found <span className="font-semibold">{searchResults.length}</span>{" "}
+          result{searchResults.length !== 1 && "s"} for{" "}
+          <span className="font-medium">"{searchQuery}"</span>
+        </div>
+      )}
+
+      {/* 🔹 Table Section */}
       {loading || usersLoading ? (
         <div className="flex items-center justify-center min-h-[300px]">
           <div className="animate-spin h-12 w-12 border-b-2 border-blue-900 rounded-full"></div>
@@ -231,7 +222,7 @@ export default function UsersPage() {
           </div>
 
           {!isSearchMode && (
-            <div className="mt-4 flex justify-between items-center">
+            <div className="mt-6 flex justify-between items-center">
               <button
                 onClick={() => handlePageChange(usersPage - 1)}
                 disabled={usersPage === 1}
@@ -239,7 +230,11 @@ export default function UsersPage() {
               >
                 Previous
               </button>
-              <span className="text-gray-700">Page {usersPage}</span>
+
+              <span className="text-gray-700 font-medium">
+                Page {usersPage}
+              </span>
+
               <button
                 onClick={() => handlePageChange(usersPage + 1)}
                 disabled={!usersHasMore}
