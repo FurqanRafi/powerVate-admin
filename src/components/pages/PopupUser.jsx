@@ -2,12 +2,13 @@
 
 import React, { useContext, useState } from "react";
 import AppContext from "../../context/AppContext";
+import { toast } from "react-toastify";
 
-export default function popupUser({ isOpen, onClose, onSubmit }) {
-  const { createUser } = useContext(AppContext);
-  if (!isOpen) return null; // ✅ popup hide logic
+export default function PopupUser({ isOpen, onClose, onUserCreated }) {
+  const { createUser, fetchUsersPage } = useContext(AppContext);
+  const [loading, setLoading] = useState(false);
 
-  const [loading, setloading] = useState(false);
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,24 +26,35 @@ export default function popupUser({ isOpen, onClose, onSubmit }) {
     }
 
     try {
-      setloading(true);
-      await createUser(formData);
-      form.reset(); // optional
-      onClose();
+      setLoading(true);
+
+      // ✅ Step 1: Create the user
+      const result = await createUser(formData);
+
+      if (result.success) {
+        toast.success("User created successfully!");
+
+        // ✅ Step 2: Wait for users to reload before closing popup
+        await fetchUsersPage(1, true);
+
+        // ✅ Step 3: Close popup only after new data is visible
+        onClose();
+      } else {
+        toast.error(result.message || "Failed to create user");
+      }
     } catch (err) {
       console.error("Error creating user", err);
+      toast.error("Error creating user");
     } finally {
-      setloading(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        {/* Header */}
-        <h2 className="text-lg font-semibold mb-4">User Form</h2>
+        <h2 className="text-lg font-semibold mb-4">Create New User</h2>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
@@ -65,7 +77,6 @@ export default function popupUser({ isOpen, onClose, onSubmit }) {
             className="w-full border rounded px-3 py-2"
           />
 
-          {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
@@ -74,12 +85,13 @@ export default function popupUser({ isOpen, onClose, onSubmit }) {
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
+              className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800 disabled:opacity-70"
             >
-              {loading ? "Saving...." : "Save"}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

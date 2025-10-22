@@ -215,12 +215,24 @@ export const AppProvider = ({ children }) => {
   const createUser = async (userData) => {
     try {
       const usersRef = collection(db, "users");
-      const docRef = await addDoc(usersRef, userData);
-      console.log("User created with ID:", docRef.id);
+      const docRef = await addDoc(usersRef, {
+        profile: {
+          fullName: userData.fullName,
+          email: userData.email,
+          password: userData.password,
+          profileSetup: false,
+          created_at: new Date(), // ✅ auto timestamp
+        },
+      });
+
+      await updateDoc(doc(db, "users", docRef.id), { uid: docRef.id });
+
       toast.success("User Created Successfully");
+      return { success: true, id: docRef.id };
     } catch (error) {
       console.error("Error creating user:", error);
       toast.error("Failed to create user");
+      return { success: false, message: error.message };
     }
   };
 
@@ -547,7 +559,7 @@ export const AppProvider = ({ children }) => {
       const doctorRef = collection(db, "doctors");
       const docRef = await addDoc(doctorRef, {
         ...doctorsData,
-        createdAt: new Date(),
+        created_at: new Date(),
       });
       toast.success("Doctor added successfully!");
       return { success: true, id: docRef.id };

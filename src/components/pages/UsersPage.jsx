@@ -45,8 +45,6 @@ export default function UsersPage() {
   //   }
   // };
 
-  
-
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setIsSearchMode(false);
@@ -113,11 +111,13 @@ export default function UsersPage() {
       <PopupUser
         isOpen={OpenForm}
         onClose={() => setOpenForm(false)}
-        onSubmit={(data) => {
-          console.log("Form Submitted:", data);
+        onSubmit={async (data) => {
+          await createUser(data);
+          await fetchUsersPage(1, true); // ✅ refresh after creating
           setOpenForm(false);
         }}
       />
+
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col gap-5">
           <h3 className="text-xl font-bold text-gray-800">Users Management</h3>

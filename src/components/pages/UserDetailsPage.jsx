@@ -64,11 +64,11 @@ export default function UserDetailsPage() {
     }
   };
   useEffect(() => {
-  const currentPath = window.location.pathname;
-  if (currentPath.startsWith("/user-details/")) {
-    setActivePage("users");
-  }
-}, []);
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith("/user-details/")) {
+      setActivePage("users");
+    }
+  }, []);
 
   if (!adminData) {
     return null;
@@ -92,7 +92,11 @@ export default function UserDetailsPage() {
         activityLevel: result.user.profile?.activityLevel || "",
       });
     } else {
-      navigate("/dashboard");
+      navigate("/dashboard", {
+        state: {
+          activePage: "users",
+        },
+      });
     }
     setLoading(false);
   };
@@ -126,7 +130,11 @@ export default function UserDetailsPage() {
   const handleDelete = async () => {
     const result = await deleteUser(id);
     if (result.success) {
-      navigate("/dashboard");
+      navigate("/dashboard", {
+        state: {
+          activePage: "users",
+        },
+      });
     }
   };
 
@@ -184,7 +192,7 @@ export default function UserDetailsPage() {
                 navigate("/dashboard", {
                   state: {
                     activePage: "users",
-                    fromUserDetails: true, // 👈 add this flag
+                    fromUserDetails: true,
                   },
                 });
               }}
