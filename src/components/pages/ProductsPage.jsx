@@ -8,7 +8,6 @@ const ProductsPage = () => {
   const { createProduct, getAllProducts, updateProduct, deleteProduct } =
     useContext(AppContext);
 
-  const [products, setProducts] = useState([]);
   const [openForm, setOpenForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [loading, setLoading] = useState(false);
