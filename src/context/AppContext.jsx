@@ -477,13 +477,28 @@ export const AppProvider = ({ children }) => {
     }
   }, [admin]);
 
+  // inside AppProvider (AppContext) — near other product functions / near top-level state
+  const PRODUCTS_PAGE_SIZE = 6; // change page size if you want
+
+  // products pagination state
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsHasMore, setProductsHasMore] = useState(true);
+
+  const productPageCursorsRef = React.useRef({});
+  const lastFetchedProductsPageRef = React.useRef(0);
+
+  // Create product (add name_lower for search)
   const createProduct = async (productData) => {
     try {
       const productsRef = collection(db, "products");
-      const docRef = await addDoc(productsRef, {
+      const payload = {
         ...productData,
+        name_lower: productData.name ? productData.name.toLowerCase() : "",
         createdAt: new Date(),
-      });
+      };
+      const docRef = await addDoc(productsRef, payload);
       toast.success("Product added successfully!");
       return { success: true, id: docRef.id };
     } catch (error) {
@@ -493,17 +508,13 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Get one-time all products (keep if you use it elsewhere)
   const getAllProducts = async () => {
     try {
       const productsRef = collection(db, "products");
       const snapshot = await getDocs(productsRef);
-
-      const products = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      return { success: true, products };
+      const prods = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      return { success: true, products: prods };
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error("Failed to fetch products");
@@ -511,11 +522,110 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Fetch page of products (pagination by name_lower then doc cursor)
+  const fetchProductsPage = async (pageNumber = 1, reset = false) => {
+    if (reset) {
+      setProducts([]);
+      productPageCursorsRef.current = {};
+      lastFetchedProductsPageRef.current = 0;
+      setProductsPage(1);
+    }
+    if (lastFetchedProductsPageRef.current === pageNumber) {
+      // already on requested page
+      return;
+    }
+
+    setProductsLoading(true);
+    try {
+      const productsRef = collection(db, "products");
+      let q;
+
+      // We order by name_lower for stable deterministic ordering for pagination
+      if (pageNumber === 1) {
+        q = query(
+          productsRef,
+          orderBy("name_lower"),
+          limit(PRODUCTS_PAGE_SIZE)
+        );
+      } else {
+        const cursor = productPageCursorsRef.current[pageNumber - 1];
+        if (!cursor) {
+          setProductsLoading(false);
+          return;
+        }
+        q = query(
+          productsRef,
+          orderBy("name_lower"),
+          startAfter(cursor),
+          limit(PRODUCTS_PAGE_SIZE)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+      const fetched = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      if (snapshot.docs.length > 0) {
+        // store last doc of this page to use as cursor for next page
+        productPageCursorsRef.current[pageNumber] =
+          snapshot.docs[snapshot.docs.length - 1];
+      }
+
+      setProductsHasMore(snapshot.docs.length === PRODUCTS_PAGE_SIZE);
+      setProducts(fetched);
+      lastFetchedProductsPageRef.current = pageNumber;
+      return fetched;
+    } catch (err) {
+      console.error("Error fetching products page:", err);
+      toast.error("Failed to fetch products");
+      return null;
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const goToProductsPage = (pageNumber) => {
+    setProductsPage(pageNumber);
+    fetchProductsPage(pageNumber);
+  };
+
+  // Search products by name prefix (server query)
+  const searchProductsByName = async (namePrefix) => {
+    try {
+      setProductsLoading(true);
+      const productsRef = collection(db, "products");
+      const q = query(
+        productsRef,
+        orderBy("name_lower"),
+        startAt(namePrefix.toLowerCase()),
+        endAt(namePrefix.toLowerCase() + "\uf8ff")
+      );
+      const snap = await getDocs(q);
+      const results = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setProducts(results); // optionally set products to show search results
+      setProductsHasMore(false);
+      return { success: true, products: results };
+    } catch (err) {
+      console.error("Error searching products:", err);
+      toast.error("Search failed");
+      return { success: false, message: err.message };
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  // Update / delete product remain same but ensure they update local state if needed:
   const updateProduct = async (id, data) => {
     try {
       const docRef = doc(db, "products", id);
-      await updateDoc(docRef, { ...data, updatedAt: new Date() });
+      const payload = { ...data, updatedAt: new Date() };
+      if (payload.name) payload.name_lower = payload.name.toLowerCase();
+      await updateDoc(docRef, payload);
       toast.success("Product updated successfully!");
+      // refresh local list if currently loaded (best to re-fetch current page)
+      await fetchProductsPage(productsPage, true);
       return { success: true };
     } catch (error) {
       console.error("Error updating product:", error);
@@ -529,6 +639,8 @@ export const AppProvider = ({ children }) => {
       const docRef = doc(db, "products", id);
       await deleteDoc(docRef);
       toast.success("Product deleted successfully!");
+      // refresh current page
+      await fetchProductsPage(productsPage, true);
       return { success: true };
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -639,10 +751,17 @@ export const AppProvider = ({ children }) => {
         fetchUserByName,
         fetchUserByDate,
 
+        products,
+        productsLoading,
+        productsPage,
+        productsHasMore,
+        fetchProductsPage,
+        goToProductsPage,
         createProduct,
         getAllProducts,
         updateProduct,
         deleteProduct,
+        searchProductsByName,
 
         addDoctors,
         getAllDoctor,
