@@ -11,10 +11,8 @@ const ProductsPage = () => {
     productsPage,
     productsHasMore,
     fetchProductsPage,
-    goToProductsPage,
     updateProduct,
     deleteProduct,
-    searchProductsByName,
   } = useContext(AppContext);
 
   const [openForm, setOpenForm] = useState(false);
@@ -23,7 +21,12 @@ const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
 
-  // refresh page 1
+  // Initial Load
+  useEffect(() => {
+    fetchProductsPage(1);
+  }, []);
+
+  // Refresh Products
   const refreshProducts = async () => {
     setLocalLoading(true);
     await fetchProductsPage(1, true);
@@ -32,14 +35,11 @@ const ProductsPage = () => {
     setSearchQuery("");
   };
 
-  useEffect(() => {
-    fetchProductsPage(1);
-  }, []);
-
+  // Form Submit (Add / Edit)
   const handleFormSubmit = async (data) => {
     setLocalLoading(true);
     if (editingProduct) {
-      await updateProduct(editingProduct.id, data);
+      await updateProduct(editingProduct._id || editingProduct.id, data);
     } else {
       await createProduct(data);
     }
@@ -51,15 +51,27 @@ const ProductsPage = () => {
     setSearchQuery("");
   };
 
+  // Delete Product
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
+
     setLocalLoading(true);
     await deleteProduct(id);
+
+    // Pehle current page fetch karo
     await fetchProductsPage(productsPage, true);
+
+    // Agar current page khali ho gaya aur page > 1 hai
+    if (products.length === 1 && productsPage > 1) {
+      // Pichle page fetch karo
+      await fetchProductsPage(productsPage - 1, true);
+    }
+
     setLocalLoading(false);
   };
 
+  // ✅ Search Products
   const handleSearch = async () => {
     const q = searchQuery.trim();
     if (!q) {
@@ -67,12 +79,14 @@ const ProductsPage = () => {
       setIsSearchMode(false);
       return;
     }
+
     setLocalLoading(true);
-    await searchProductsByName(q);
+    await fetchProductsPage(1, true, q);
     setIsSearchMode(true);
     setLocalLoading(false);
   };
 
+  // ✅ Clear Search
   const handleClearSearch = async () => {
     setSearchQuery("");
     setIsSearchMode(false);
@@ -107,12 +121,11 @@ const ProductsPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    e.preventDefault(); // page reload hone se rokta hai
-                    handleSearch(); // 👈 Enter par ye function call hoga
+                    e.preventDefault();
+                    handleSearch();
                   }
                 }}
                 className="px-3 py-2 border rounded-md pr-8"
-                // aik click kara pa Search ho jay Enter Karna par
               />
               {searchQuery && (
                 <button
@@ -173,7 +186,7 @@ const ProductsPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
                 <div
-                  key={product.id}
+                  key={product._id || product.id}
                   className="border rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
                 >
                   <div className="w-full h-48 flex items-center justify-center overflow-hidden bg-gray-50">
@@ -221,7 +234,7 @@ const ProductsPage = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDelete(product._id || product.id)}
                         className="px-4 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm transition-all"
                       >
                         Delete
@@ -235,9 +248,7 @@ const ProductsPage = () => {
             {!isSearchMode && (
               <div className="mt-6 flex justify-between items-center">
                 <button
-                  onClick={() =>
-                    goToProductsPage(Math.max(1, productsPage - 1))
-                  }
+                  onClick={() => fetchProductsPage(productsPage - 1)}
                   disabled={productsPage === 1}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
                 >
@@ -249,7 +260,7 @@ const ProductsPage = () => {
                 </span>
 
                 <button
-                  onClick={() => goToProductsPage(productsPage + 1)}
+                  onClick={() => fetchProductsPage(productsPage + 1)}
                   disabled={!productsHasMore}
                   className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50"
                 >

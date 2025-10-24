@@ -8,6 +8,7 @@ const PopupProducts = ({ isOpen, onClose, onSubmit, initialData }) => {
     name: "",
     imageUrl: "",
   });
+
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -45,16 +46,9 @@ const PopupProducts = ({ isOpen, onClose, onSubmit, initialData }) => {
   // ✅ Form Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      setLoading(true);
-      if (!formData.name || !formData.imageUrl)
-        return toast.warn("Please fill all required fields.");
-      await onSubmit(formData);
-    } catch (error) {
-      console.error("Products Not Created", error);
-    } finally {
-      setLoading(false);
-    }
+    if (!formData.name || !formData.imageUrl)
+      return toast.warn("Please fill all required fields.");
+    await onSubmit(formData); // send { name, imageUrl } to backend
   };
 
   return (
